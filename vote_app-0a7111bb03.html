@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时投票系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 50%, #0d1526 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.99);
+            border-radius: 28px;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            padding: 50px;
+            max-width: 580px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .title-en {
+            text-align: center;
+            color: #ff6b6b;
+            margin-bottom: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #333;
+            margin-bottom: 35px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .subtitle-en {
+            text-align: center;
+            color: #777;
+            margin-bottom: 40px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .vote-options {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .vote-card {
+            border-radius: 20px;
+            padding: 28px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 3px solid transparent;
+        }
+
+        /* 伊朗卡片 - 鲜艳绿色主题 */
+        .vote-card.iran-card {
+            background: linear-gradient(145deg, #2ecc71 0%, #27ae60 100%);
+            border-color: #1e8449;
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+        }
+
+        .vote-card.iran-card h3 {
+            color: #ffffff;
+            font-size: 24px;
+            margin-bottom: 4px;
+            font-weight: 800;
+        }
+
+        .vote-card.iran-card h4 {
+            color: #e8f8f5;
+            font-size: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .vote-card.iran-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 15px 40px rgba(46, 204, 113, 0.6);
+            background: linear-gradient(145deg, #27ae60 0%, #1e8449 100%);
+        }
+
+        .vote-card.iran-card.voted {
+            background: linear-gradient(145deg, #1e8449 0%, #145a32 100%);
+            border-color: #0e6251;
+            box-shadow: 0 10px 35px rgba(46, 204, 113, 0.5);
+            transform: scale(1.02);
+        }
+
+        .vote-card.iran-card.voted::after {
+            content: '✓';
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+            color: white;
+            font-weight: 900;
+        }
+
+        /* 美国卡片 - 蓝红渐变主题 */
+        .vote-card.usa-card {
+            background: linear-gradient(145deg, #3498db 0%, #2980b9 100%);
+            border-color: #1a5276;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .vote-card.usa-card h3 {
+            color: #ffffff;
+            font-size: 24px;
+            margin-bottom: 4px;
+            font-weight: 800;
+        }
+
+        .vote-card.usa-card h4 {
+            color: #eaf2f8;
+            font-size: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .vote-card.usa-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 15px 40px rgba(52, 152, 219, 0.6);
+            background: linear-gradient(145deg, #2980b9 0%, #1a5276 100%);
+        }
+
+        .vote-card.usa-card.voted {
+            background: linear-gradient(145deg, #1a5276 0%, #154360 100%);
+            border-color: #0e4d75;
+            box-shadow: 0 10px 35px rgba(52, 152, 219, 0.5);
+            transform: scale(1.02);
+        }
+
+        .vote-card.usa-card.voted::after {
+            content: '✓';
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+            color: white;
+            font-weight: 900;
+        }
+
+        /* 以色列卡片 - 深蓝色主题 */
+        .vote-card.israel-card {
+            background: linear-gradient(145deg, #9b59b6 0%, #8e44ad 100%);
+            border-color: #6c3483;
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+        }
+
+        .vote-card.israel-card h3 {
+            color: #ffffff;
+            font-size: 24px;
+            margin-bottom: 4px;
+            font-weight: 800;
+        }
+
+        .vote-card.israel-card h4 {
+            color: #f4ecf7;
+            font-size: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .vote-card.israel-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 15px 40px rgba(155, 89, 182, 0.6);
+            background: linear-gradient(145deg, #8e44ad 0%, #6c3483 100%);
+        }
+
+        .vote-card.israel-card.voted {
+            background: linear-gradient(145deg, #6c3483 0%, #5b2c6f 100%);
+            border-color: #4a235a;
+            box-shadow: 0 10px 35px rgba(155, 89, 182, 0.5);
+            transform: scale(1.02);
+        }
+
+        .vote-card.israel-card.voted::after {
+            content: '✓';
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+            color: white;
+            font-weight: 900;
+        }
+
+        .flag-image {
+            width: 70px;
+            height: 47px;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .vote-content {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .vote-card .click-hint {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .vote-stats {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 3px solid #e9ecef;
+        }
+
+        .stats-title {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .stats-title-en {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .stat-bar {
+            margin-bottom: 20px;
+        }
+
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .progress-bg {
+            background: #f0f0f0;
+            border-radius: 12px;
+            height: 32px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 800;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .iran-fill {
+            background: linear-gradient(90deg, #2ecc71 0%, #27ae60 50%, #2ecc71 100%);
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.5);
+        }
+
+        .us-fill {
+            background: linear-gradient(90deg, #3498db 0%, #2980b9 50%, #3498db 100%);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.5);
+        }
+
+        .israel-fill {
+            background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 50%, #9b59b6 100%);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.5);
+        }
+
+        .total-votes {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            font-size: 16px;
+            color: #666;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .total-votes strong {
+            color: #667eea;
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .message {
+            text-align: center;
+            padding: 18px;
+            border-radius: 12px;
+            margin-top: 25px;
+            display: none;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            display: block;
+            border: 2px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            display: block;
+            border: 2px solid #f5c6cb;
+        }
+
+        .reset-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 25px;
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .vote-card {
+                padding: 18px;
+            }
+
+            .flag-image {
+                width: 50px;
+                height: 34px;
+            }
+
+            .vote-card h3 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>美以伊战争实时投票系统</h1>
+        <p class="title-en">US-Israel-Iran War Real-Time Voting System</p>
+        <p class="subtitle">请选择您支持的对象（每人仅可投票一次）</p>
+        <p class="subtitle-en">Select your position (One vote per person)</p>
+
+        <div class="vote-options" id="voteOptions">
+            <div class="vote-card iran-card" onclick="vote('iran')">
+                <img src="https://flagcdn.com/w160/ir.png" alt="伊朗国旗" class="flag-image">
+                <div class="vote-content">
+                    <h3>支持伊朗</h3>
+                    <h4>Support Iran</h4>
+                    <div class="click-hint">点击投票 →</div>
+                </div>
+            </div>
+            <div class="vote-card usa-card" onclick="vote('usa')">
+                <img src="https://flagcdn.com/w160/us.png" alt="美国国旗" class="flag-image">
+                <div class="vote-content">
+                    <h3>支持美国</h3>
+                    <h4>Support United States</h4>
+                    <div class="click-hint">点击投票 →</div>
+                </div>
+            </div>
+            <div class="vote-card israel-card" onclick="vote('israel')">
+                <img src="https://flagcdn.com/w160/il.png" alt="以色列国旗" class="flag-image">
+                <div class="vote-content">
+                    <h3>支持以色列</h3>
+                    <h4>Support Israel</h4>
+                    <div class="click-hint">点击投票 →</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="vote-stats">
+            <div class="stats-title">📈 实时统计</div>
+            <div class="stats-title-en">Real-Time Statistics</div>
+
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>🇮🇷 伊朗 Iran</span>
+                    <span id="iranCount">0 票 votes</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill iran-fill" id="iranBar" style="width: 0%">0%</div>
+                </div>
+            </div>
+
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>🇺🇸 美国 USA</span>
+                    <span id="usaCount">0 票 votes</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill us-fill" id="usaBar" style="width: 0%">0%</div>
+                </div>
+            </div>
+
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>🇮🇱 以色列 Israel</span>
+                    <span id="israelCount">0 票 votes</span>
+                </div>
+                <div class="progress-bg">
+                    <div class="progress-fill israel-fill" id="israelBar" style="width: 0%">0%</div>
+                </div>
+            </div>
+
+            <div class="total-votes">
+                总投票数 Total Votes：<strong id="totalCount">0</strong>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetVotes()">🔄 重置投票 Reset Votes</button>
+    </div>
+
+    <script>
+        // 初始化投票数据
+        const STORAGE_KEY = 'voteData';
+        const VOTED_KEY = 'hasVoted';
+
+        function getVoteData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                return JSON.parse(data);
+            }
+            return {
+                iran: 0,
+                usa: 0,
+                israel: 0
+            };
+        }
+
+        function saveVoteData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function hasVoted() {
+            return localStorage.getItem(VOTED_KEY) === 'true';
+        }
+
+        function setVoted() {
+            localStorage.setItem(VOTED_KEY, 'true');
+        }
+
+        function updateDisplay() {
+            const data = getVoteData();
+            const total = data.iran + data.usa + data.israel;
+
+            // 更新票数显示
+            document.getElementById('iranCount').textContent = data.iran + ' 票';
+            document.getElementById('usaCount').textContent = data.usa + ' 票';
+            document.getElementById('israelCount').textContent = data.israel + ' 票';
+            document.getElementById('totalCount').textContent = total;
+
+            // 更新进度条
+            const iranPercent = total > 0 ? ((data.iran / total) * 100).toFixed(1) : 0;
+            const usaPercent = total > 0 ? ((data.usa / total) * 100).toFixed(1) : 0;
+            const israelPercent = total > 0 ? ((data.israel / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('iranBar').style.width = iranPercent + '%';
+            document.getElementById('iranBar').textContent = iranPercent + '%';
+
+            document.getElementById('usaBar').style.width = usaPercent + '%';
+            document.getElementById('usaBar').textContent = usaPercent + '%';
+
+            document.getElementById('israelBar').style.width = israelPercent + '%';
+            document.getElementById('israelBar').textContent = israelPercent + '%';
+
+            // 如果已经投过票，禁用投票卡片
+            if (hasVoted()) {
+                const cards = document.querySelectorAll('.vote-card');
+                cards.forEach(card => {
+                    card.style.opacity = '0.5';
+                    card.style.cursor = 'not-allowed';
+                });
+            }
+        }
+
+        function vote(option) {
+            const messageEl = document.getElementById('message');
+
+            // 检查是否已经投过票
+            if (hasVoted()) {
+                messageEl.className = 'message error';
+                messageEl.textContent = '❌ 您已经投过票了，每人仅可投票一次！';
+                return;
+            }
+
+            // 获取当前数据并更新
+            const data = getVoteData();
+            data[option]++;
+            saveVoteData(data);
+
+            // 标记已投票
+            setVoted();
+
+            // 更新显示
+            updateDisplay();
+
+            // 显示成功消息
+            messageEl.className = 'message success';
+            const optionNames = {
+                'iran': '伊朗',
+                'usa': '美国',
+                'israel': '以色列'
+            };
+            messageEl.textContent = '✅ 投票成功！您支持了 ' + optionNames[option];
+
+            // 标记选中的卡片
+            const cards = document.querySelectorAll('.vote-card');
+            cards.forEach(card => card.classList.remove('voted'));
+            const selectedCard = document.querySelector('.' + option + '-card');
+            if (selectedCard) {
+                selectedCard.classList.add('voted');
+            }
+        }
+
+        function resetVotes() {
+            if (confirm('确定要重置所有投票数据吗？此操作不可恢复！')) {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(VOTED_KEY);
+
+                // 重置卡片状态
+                const cards = document.querySelectorAll('.vote-card');
+                cards.forEach(card => {
+                    card.style.opacity = '1';
+                    card.style.cursor = 'pointer';
+                    card.classList.remove('voted');
+                });
+
+                // 清除消息
+                document.getElementById('message').style.display = 'none';
+
+                // 更新显示
+                updateDisplay();
+            }
+        }
+
+        // 页面加载时更新显示
+        window.onload = function() {
+            updateDisplay();
+        };
+    </script>
+</body>
+</html>
